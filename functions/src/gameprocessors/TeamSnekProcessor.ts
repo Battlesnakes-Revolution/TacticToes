@@ -9,6 +9,8 @@ export class TeamSnekProcessor extends SnekProcessor {
     this.maxTurns = gameState.setup.maxTurns || 100;
   }
 
+
+
   firstTurn(): Turn {
     const baseTurn = super.firstTurn();
 
@@ -27,15 +29,20 @@ export class TeamSnekProcessor extends SnekProcessor {
   }
 
   applyMoves(currentTurn: Turn, moves: Move[]): Turn {
+    
     const baseTurn = super.applyMoves(currentTurn, moves);
 
-    logger.info(`TeamSnek: Base turn applied. {}`)
+    logger.info(`TeamSnek: Base turn applied. ${baseTurn}`);
 
     // Calculate team scores
     const teamScores = this.calculateTeamScores(baseTurn.playerPieces);
 
+    logger.info(`TeamSnek: Team scores calculated. ${teamScores}`);
+
     // Check for elimited teams
     const eliminatedTeams = this.getEliminatedTeams(baseTurn.alivePlayers);
+
+    logger.info(`TeamSnek: Eliminated teams calculated. ${eliminatedTeams}`);
 
     // Check win conditions
     const winners = this.determineTeamWinners(
@@ -43,6 +50,7 @@ export class TeamSnekProcessor extends SnekProcessor {
       eliminatedTeams,
       baseTurn.turnNumber || 0,
     );
+    logger.info(`TeamSnek: Winners determined. ${winners}`);
 
     return {
       ...baseTurn,
@@ -56,6 +64,7 @@ export class TeamSnekProcessor extends SnekProcessor {
     [teamID: string]: number;
   } {
     const teamScores: { [teamID: string]: number } = {};
+    logger.info(`TeamSnek: Calculating team scores. ${playerPieces}`)
 
     this.gameSetup.teams?.forEach((team) => {
       let teamSnakeLength = 0;

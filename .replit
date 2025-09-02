@@ -36,3 +36,12 @@ externalPort = 80
 [[ports]]
 localPort = 5001
 externalPort = 3000
+
+[[ports]]
+localPort = 8124
+externalPort = 3001
+
+[deployment]
+build = ["sh", "-c", "cd frontend && npm run build"]
+run = ["sh", "-c", "cd frontend && npm run preview"]
+deploymentTarget = "cloudrun"
