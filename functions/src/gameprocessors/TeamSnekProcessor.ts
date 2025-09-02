@@ -1,5 +1,6 @@
 import { GameState, Move, Turn, Winner } from "@shared/types/Game";
 import { SnekProcessor } from "./SnekProcessor";
+import { logger } from "../logger";
 
 export class TeamSnekProcessor extends SnekProcessor {
   private maxTurns: number = 100;
@@ -28,7 +29,7 @@ export class TeamSnekProcessor extends SnekProcessor {
   applyMoves(currentTurn: Turn, moves: Move[]): Turn {
     const baseTurn = super.applyMoves(currentTurn, moves);
 
-    console.log("Base Turn", baseTurn);
+    logger.info("TeamSnek: Base turn applied.")
 
     // Calculate team scores
     const teamScores = this.calculateTeamScores(baseTurn.playerPieces);
