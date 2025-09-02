@@ -29,7 +29,7 @@ export class TeamSnekProcessor extends SnekProcessor {
   applyMoves(currentTurn: Turn, moves: Move[]): Turn {
     const baseTurn = super.applyMoves(currentTurn, moves);
 
-    logger.info("TeamSnek: Base turn applied.")
+    logger.info(`TeamSnek: Base turn applied. {}`)
 
     // Calculate team scores
     const teamScores = this.calculateTeamScores(baseTurn.playerPieces);
