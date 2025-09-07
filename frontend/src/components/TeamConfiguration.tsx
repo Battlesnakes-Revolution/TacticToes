@@ -24,8 +24,7 @@ interface TeamConfigurationProps {
 export const TeamConfiguration: React.FC<TeamConfigurationProps> = ({
   teams,
   onTeamsChange,
-  maxTurns,
-  onMaxTurnsChange,
+  maxTurns,onMaxTurnsChange,
 }) => {
   const [newTeamName, setNewTeamName] = useState("");
   const [newTeamColor, setNewTeamColor] = useState("#000000");
@@ -57,8 +56,7 @@ export const TeamConfiguration: React.FC<TeamConfigurationProps> = ({
           type="number"
           label="Max Turns"
           value={maxTurns}
-          onChange={(e) => onMaxTurnsChange(parseInt(e.target.value) || 100)}
-          inputProps={{ min: 1, max: 1000 }}
+          onChange={(e) => onMaxTurnsChange(parseInt(e.target.value))}
         />
       </FormControl>
 

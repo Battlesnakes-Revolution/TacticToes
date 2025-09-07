@@ -66,6 +66,7 @@ const GameSetup: React.FC = () => {
   // Update local state when gameSetup changes
   useEffect(() => {
     if (gameSetup) {
+      // Update board size
       const currentSize = Object.entries(BOARD_SIZE_MAPPING).find(
         ([, dimensions]) =>
           dimensions.width === gameSetup.boardWidth &&
@@ -74,10 +75,26 @@ const GameSetup: React.FC = () => {
       if (currentSize) {
         setBoardSize(currentSize[0] as BoardSize)
       }
-      if (gameSetup.gameType) setGameType(gameSetup.gameType)
+
+      // Update game type
+      if (gameSetup.gameType) {
+        setGameType(gameSetup.gameType)
+      }
+
+      // Update turn time
       setSecondsPerTurn(`${gameSetup.maxTurnTime}`)
+
+      //  Update max turns
+      if (gameSetup.maxTurns !== undefined) {
+        setMaxTurns(gameSetup.maxTurns)
+      }
+
+      //  Update teams
+      if (gameSetup.teams) {
+        setTeams(gameSetup.teams)
+      }
     }
-  }, [gameSetup])
+  }, [gameSetup, setGameType])
 
   // Start game
   const handleReady = async () => {
@@ -136,15 +153,14 @@ const GameSetup: React.FC = () => {
   }
 
   const handlePlayerTeamKick = async (playerID: string, teamID: string) => {
-    
-    if (!gameSetup) return;
-  
+   if (!gameSetup) return;
+
     const playerIndex = gameSetup.gamePlayers.findIndex(
       (player: GamePlayer) => player.id === playerID && player.teamID === teamID
     );
   
     if (playerIndex === -1) {
-     
+     console.log("Player not found.")
       return;
     }
   

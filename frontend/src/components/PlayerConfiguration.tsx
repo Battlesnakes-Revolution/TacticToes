@@ -20,7 +20,7 @@ interface PlayerConfigurationProps {
   gamePlayers: GamePlayer[];
   onTeamChange: (playerID: string, teamID: string) => void;
   onPlayerKick: (playerID: string, type: "bot" | "human") => void;
-  onPlayerTeamKick: (playerID: string, type: "bot" | "human", teamID: string) => void;
+  onPlayerTeamKick: (playerID: string, teamID: string) => void;
   playersReady: string[];
 }
 
@@ -134,7 +134,7 @@ export const PlayerConfiguration: React.FC<PlayerConfigurationProps> = ({
                       <TableCell
                         align="right"
                         sx={{ backgroundColor: player.colour }}
-                        onClick={() => onPlayerTeamKick(player.id, gamePlayer.type, gamePlayer.teamID || "")}
+                        onClick={() => onPlayerTeamKick(player.id,gamePlayer.teamID || "")}
                         style={{ cursor: "pointer" }}
                       >
                         ❌
