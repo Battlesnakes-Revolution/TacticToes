@@ -45,7 +45,6 @@
 
   // Team type
   export interface Team {
-    playerIDs: string[]
     id: string
     name: string
     color: string

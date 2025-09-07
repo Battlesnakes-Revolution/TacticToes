@@ -11,7 +11,7 @@ interface Team {
   id: string;
   name: string;
   color: string;
-  playerIDs: string[];
+
 }
 
 interface TeamConfigurationProps {
@@ -36,7 +36,7 @@ export const TeamConfiguration: React.FC<TeamConfigurationProps> = ({
         id: `team_${Date.now()}`,
         name: newTeamName,
         color: newTeamColor,
-        playerIDs: [],
+
       };
       onTeamsChange([...teams, newTeam]);
       setNewTeamName("");

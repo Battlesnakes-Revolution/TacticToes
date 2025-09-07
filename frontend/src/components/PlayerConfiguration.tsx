@@ -19,7 +19,8 @@ interface PlayerConfigurationProps {
   players: Player[];
   gamePlayers: GamePlayer[];
   onTeamChange: (playerID: string, teamID: string) => void;
-  onKick: (playerID: string, type: "bot" | "human") => void;
+  onPlayerKick: (playerID: string, type: "bot" | "human") => void;
+  onPlayerTeamKick: (playerID: string, type: "bot" | "human", teamID: string) => void;
   playersReady: string[];
 }
 
@@ -28,7 +29,8 @@ export const PlayerConfiguration: React.FC<PlayerConfigurationProps> = ({
   players,
   gamePlayers,
   onTeamChange,
-  onKick,
+  onPlayerKick,
+  onPlayerTeamKick,
   playersReady,
 }) => {
   // Group players by team
@@ -39,8 +41,9 @@ export const PlayerConfiguration: React.FC<PlayerConfigurationProps> = ({
 
   // Get unassigned players
   const unassignedPlayers = gamePlayers.filter(
-    (gamePlayer) => !gamePlayer.teamID
+    (gamePlayer) =>  !gamePlayer.teamID
   );
+
 
   return (
     <div>
@@ -131,7 +134,7 @@ export const PlayerConfiguration: React.FC<PlayerConfigurationProps> = ({
                       <TableCell
                         align="right"
                         sx={{ backgroundColor: player.colour }}
-                        onClick={() => onKick(player.id, gamePlayer.type)}
+                        onClick={() => onPlayerTeamKick(player.id, gamePlayer.type, gamePlayer.teamID || "")}
                         style={{ cursor: "pointer" }}
                       >
                         ❌
@@ -217,7 +220,7 @@ export const PlayerConfiguration: React.FC<PlayerConfigurationProps> = ({
                       <TableCell
                         align="right"
                         sx={{ backgroundColor: player.colour }}
-                        onClick={() => onKick(player.id, gamePlayer.type)}
+                        onClick={() => onPlayerKick(player.id, gamePlayer.type)}
                         style={{ cursor: "pointer" }}
                       >
                         ❌

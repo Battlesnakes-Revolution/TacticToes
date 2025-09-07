@@ -1,6 +1,6 @@
 // src/pages/GamePage/components/GameSetup.tsx
 
-import { arrayRemove, arrayUnion, doc, updateDoc } from "firebase/firestore"
+import { arrayRemove, arrayUnion, deleteField, doc, FieldValue, updateDoc } from "firebase/firestore"
 import React, { useEffect, useState } from "react"
 import { useUser } from "../../context/UserContext"
 import { db } from "../../firebaseConfig"
@@ -105,14 +105,14 @@ const GameSetup: React.FC = () => {
   }
 
   // Kick a player by removing their playerID from the playerIDs field
-  const handleKick = async (playerID: string, type: "bot" | "human") => {
+  const handlePlayerKick = async (playerID: string, type: "bot" | "human") => {
     const player: GamePlayer = {
       id: playerID,
       type: type,
     }
     await updateDoc(gameDocRef, {
       gamePlayers: arrayRemove(player),
-    })
+        })
   }
 
   // Handle team assignment for a player
@@ -135,6 +135,31 @@ const GameSetup: React.FC = () => {
     setTeams(newTeams)
   }
 
+  const handlePlayerTeamKick = async (playerID: string, teamID: string) => {
+    
+    if (!gameSetup) return;
+  
+    const playerIndex = gameSetup.gamePlayers.findIndex(
+      (player: GamePlayer) => player.id === playerID && player.teamID === teamID
+    );
+  
+    if (playerIndex === -1) {
+     
+      return;
+    }
+  
+    //  Use null instead of deleteField()
+    const updatedGamePlayers = gameSetup.gamePlayers.map((player, index) => 
+      index === playerIndex 
+        ? { ...player, teamID: null }  //  Set to null
+        : player
+    );
+  
+    await updateDoc(gameDocRef, {
+      gamePlayers: updatedGamePlayers
+    });
+  };
+
   // Handle max turns configuration
   const handleMaxTurnsChange = async (newMaxTurns: number) => {
     await updateDoc(gameDocRef, {
@@ -145,7 +170,7 @@ const GameSetup: React.FC = () => {
 
   // Handler for selecting game type
   const handleGameTypeChange = async (event: SelectChangeEvent<GameType>) => {
-    console.log("handleGameTypeChange", event.target.value)
+
     const selectedGameType = event.target.value as GameType
     setGameType(selectedGameType)
 
@@ -344,7 +369,7 @@ const GameSetup: React.FC = () => {
       )}
 
       {/* Players Table */}
-      {(gameType === "teamsnek" || gameType === "snek") && teams.length > 0 ? (
+      {(gameType === "teamsnek" ) && teams.length > 0 ? (
         <FormControl fullWidth variant="outlined" sx={{ mt: 2 }}>
           <InputLabel shrink sx={{ backgroundColor: "white", px: 1 }}>
             Player Configuration
@@ -362,8 +387,9 @@ const GameSetup: React.FC = () => {
               players={players}
               gamePlayers={gameSetup.gamePlayers}
               onTeamChange={handleTeamChange}
-              onKick={handleKick}
+              onPlayerKick={handlePlayerKick}
               playersReady={playersReady}
+              onPlayerTeamKick={handlePlayerTeamKick}
             />
           </Box>
         </FormControl>
@@ -397,7 +423,7 @@ const GameSetup: React.FC = () => {
                     <TableCell
                       align="right"
                       sx={{ backgroundColor: player.colour }}
-                      onClick={() => handleKick(player.id, gamePlayer.type)}
+                      onClick={() => handlePlayerKick(player.id, gamePlayer.type)}
                     >
                       ❌
                     </TableCell>
