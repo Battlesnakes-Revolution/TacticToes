@@ -32,7 +32,7 @@ export const firebaseConfig = {
     "G-WYJM1LMD06",
 };
 
-console.log(firebaseConfig)
+
 
 const app = initializeApp(firebaseConfig)
 export const db = getFirestore(app)
@@ -45,6 +45,7 @@ provider.addScope("profile")
 provider.addScope("email")
 
 if (window.location.hostname === "localhost") {
+
   connectFirestoreEmulator(db, "localhost", 8080) // Use connectFirestoreEmulator for local Firestore
   connectAuthEmulator(auth, "http://localhost:9099") // Authentication emulator
 }
