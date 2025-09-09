@@ -455,7 +455,7 @@ export class SnekProcessor extends GameProcessor {
     return winners
   }
 
-  private createNewTurn(currentTurn: Turn, gameState: SnakeGameState, winners: Winner[]): Turn {
+  protected createNewTurn(currentTurn: Turn, gameState: SnakeGameState, winners: Winner[]): Turn {
     // Update allowed moves
     gameState.newAllowedMoves = this.calculateAllowedMoves(
       gameState.newSnakes,

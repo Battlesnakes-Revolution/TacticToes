@@ -51,4 +51,42 @@ export class TeamSnekProcessor extends SnekProcessor {
       teamID: teamID
     }));
   }
+
+  // Override createNewTurn to calculate team-based scores
+  protected createNewTurn(currentTurn: any, gameState: any, winners: any[]): any {
+    // Call parent method first
+    const newTurn = super.createNewTurn(currentTurn, gameState, winners);
+    
+    // Calculate team scores
+    const teamScores: { [teamID: string]: number } = {};
+    const playerScores: { [playerID: string]: number } = {};
+    
+    // First pass: calculate team totals
+    this.gameSetup.gamePlayers.forEach(player => {
+      if (player.teamID) {
+        if (!teamScores[player.teamID]) {
+          teamScores[player.teamID] = 0;
+        }
+        const snakeLength = gameState.newSnakes[player.id]?.length || 0;
+        teamScores[player.teamID] += snakeLength;
+      }
+    });
+    
+    // Second pass: assign team score to each player
+    this.gameSetup.gamePlayers.forEach(player => {
+      if (player.teamID) {
+        // Each player gets their team's total score
+        playerScores[player.id] = teamScores[player.teamID];
+      } else {
+        // Non-team players use snake length
+        playerScores[player.id] = gameState.newSnakes[player.id]?.length || 0;
+      }
+    });
+    
+    // Update the turn with new scores
+    newTurn.scores = playerScores;
+    newTurn.teamScores = teamScores;
+    
+    return newTurn;
+  }
 }
