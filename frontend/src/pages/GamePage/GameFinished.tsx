@@ -9,7 +9,7 @@ import {
   TableRow,
   Typography,
 } from "@mui/material"
-import { Winner, Team } from "@shared/types/Game"
+import { Winner } from "@shared/types/Game"
 import React, { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useGameStateContext } from "../../context/GameStateContext"

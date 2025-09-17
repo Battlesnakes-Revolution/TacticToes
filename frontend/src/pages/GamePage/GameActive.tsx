@@ -52,6 +52,12 @@ const GameActive: React.FC = () => {
     return latestMoveStatus?.movedPlayerIDs.includes(player.id)
   })
   const isGameOver = currentTurn.winners.length > 0
+  const scoringUnit = currentTurn?.scoringUnit || 'individual'
+  
+  // Filter players to only show those in the current game
+  const gamePlayers = players.filter(player => 
+    gameSetup?.gamePlayers.some(gp => gp.id === player.id)
+  )
 
   return (
     <Stack spacing={2} pt={2}>
@@ -100,48 +106,93 @@ const GameActive: React.FC = () => {
       {/* Game Grid */}
       {<GameGrid />}
 
-      {/* Players Table */}
-      <TableContainer sx={{ my: 2, width: "100%" }}>
-        <Table size="small" sx={{ borderCollapse: "collapse" }}>
-          <TableHead>
-            <TableRow>
-              <TableCell>Players</TableCell>
-              <TableCell align="right">Moved</TableCell>
-              <TableCell align="right">Score</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {players.map((player) => {
-              // const moveTime = currentTurn?.hasMoved[player.id]?.moveTime
-
-              return (
-                <TableRow
-                  key={player.id}
-                  sx={{ backgroundColor: player.colour }}
-                >
-                  <TableCell>
-                    {player.name} {player.emoji}
-                  </TableCell>
-                  <TableCell align="right">
-                    {(() => {
-                      // If game is over, use filteredPlayers logic
-                      if (isGameOver) {
-                        return filteredPlayers.includes(player) ? "yeah" : "nah"
-                      }
-                      
-                      // If game is not over, check if player has moved
-                      return latestMoveStatus?.movedPlayerIDs.includes(player.id) ? "yeah" : "nah"
-                    })()}
-                  </TableCell>
-                  <TableCell align="right">
-                    {currentTurn.scores[player.id]}
-                  </TableCell>
-                </TableRow>
-              )
-            })}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      {/* Players/Teams Table */}
+      {scoringUnit === 'team' && gameSetup?.teams ? (
+        // Team-based table
+        <TableContainer sx={{ my: 2, width: "100%" }}>
+          <Table size="small" sx={{ borderCollapse: "collapse" }}>
+            <TableHead>
+              <TableRow>
+                <TableCell>Team</TableCell>
+                <TableCell align="right">Score</TableCell>
+                <TableCell align="left">Players</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {gameSetup.teams.map((team) => {
+                const teamScore = currentTurn.teamScores?.[team.id] || 0
+                const teamPlayers = gamePlayers.filter(player =>
+                  gameSetup.gamePlayers.some(gp => gp.id === player.id && gp.teamID === team.id)
+                )
+                
+                return (
+                  <TableRow
+                    key={team.id}
+                    sx={{ backgroundColor: team.color }}
+                  >
+                    <TableCell>
+                      {team.name}
+                    </TableCell>
+                    <TableCell align="right">
+                      {teamScore}
+                    </TableCell>
+                    <TableCell align="left">
+                      {teamPlayers.map(p => (
+                        <span key={p.id}>
+                          {p.emoji} {p.name}
+                          {latestMoveStatus?.movedPlayerIDs.includes(p.id) ? " ✓" : " ⏳"}
+                          {teamPlayers.indexOf(p) < teamPlayers.length - 1 ? ", " : ""}
+                        </span>
+                      ))}
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      ) : (
+        // Individual player table
+        <TableContainer sx={{ my: 2, width: "100%" }}>
+          <Table size="small" sx={{ borderCollapse: "collapse" }}>
+            <TableHead>
+              <TableRow>
+                <TableCell>Players</TableCell>
+                <TableCell align="right">Moved</TableCell>
+                <TableCell align="right">Score</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {gamePlayers.map((player) => {
+                return (
+                  <TableRow
+                    key={player.id}
+                    sx={{ backgroundColor: player.colour }}
+                  >
+                    <TableCell>
+                      {player.name} {player.emoji}
+                    </TableCell>
+                    <TableCell align="right">
+                      {(() => {
+                        // If game is over, use filteredPlayers logic
+                        if (isGameOver) {
+                          return filteredPlayers.includes(player) ? "yeah" : "nah"
+                        }
+                        
+                        // If game is not over, check if player has moved
+                        return latestMoveStatus?.movedPlayerIDs.includes(player.id) ? "yeah" : "nah"
+                      })()}
+                    </TableCell>
+                    <TableCell align="right">
+                      {currentTurn.scores[player.id]}
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
       {/* Waiting Overlay */}
       {latestMoveStatus &&
