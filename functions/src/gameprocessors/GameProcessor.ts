@@ -28,6 +28,17 @@ export abstract class GameProcessor {
   }
 
   /**
+   * Determines the unit by which scores are calculated and winners determined
+   * Override in subclasses for team-based scoring
+   * @param setup The game setup configuration
+   * @returns 'individual' for player-based scoring, 'team' for team-based scoring
+   */
+  static getScoringUnit(setup: GameSetup): 'individual' | 'team' {
+    // Default: individual scoring for all games
+    return 'individual'
+  }
+
+  /**
    * Initializes the game by setting up the board and creating the first turn.
    */
   abstract firstTurn(): Turn

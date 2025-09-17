@@ -116,6 +116,7 @@
     teamScores?: { [teamID: string]: number } // Optional: only for team games
     eliminatedTeams?: string[] // Optional: only for team games
     turnNumber?: number // Optional: only for team games
+    scoringUnit?: 'individual' | 'team' // How scores/winners are aggregated
   }
 
   export interface Clash {
