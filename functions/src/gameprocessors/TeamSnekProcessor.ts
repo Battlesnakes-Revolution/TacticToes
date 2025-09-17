@@ -17,6 +17,13 @@ export class TeamSnekProcessor extends SnekProcessor {
     return setup.gamePlayers.filter(player => player.teamID);
   }
 
+  /**
+   * Team snek uses team-based scoring
+   */
+  static getScoringUnit(setup: GameSetup): 'individual' | 'team' {
+    return 'team';
+  }
+
   // Override calculateWinners to end game when maxTurns is reached
   protected calculateWinners(gameState: any): Winner[] {
     const currentTurnNumber = this.gameState.turns.length;
@@ -36,6 +43,35 @@ export class TeamSnekProcessor extends SnekProcessor {
     return super.calculateWinners(gameState);
   }
 
+  // Override to handle team-based survival scoring
+  protected calculateSurvivalWinners(gameState: any): Winner[] {
+    // Get individual survival winners from parent
+    const individualWinners = super.calculateSurvivalWinners(gameState);
+    
+    // Calculate team scores based on team members' survival
+    const teamScores = new Map<string, number>();
+    individualWinners.forEach(winner => {
+      const player = this.gameSetup.gamePlayers.find(p => p.id === winner.playerID);
+      if (player && player.teamID) {
+        const currentScore = teamScores.get(player.teamID) || 0;
+        teamScores.set(player.teamID, currentScore + winner.score);
+      }
+    });
+    
+    // Update winners with team scores
+    return individualWinners.map(winner => {
+      const player = this.gameSetup.gamePlayers.find(p => p.id === winner.playerID);
+      if (player && player.teamID) {
+        return {
+          ...winner,
+          teamID: player.teamID,
+          teamScore: teamScores.get(player.teamID) || 0
+        };
+      }
+      return winner;
+    });
+  }
+
   private getAliveTeams(gameState: any): string[] {
     const aliveTeams = new Set<string>();
     
@@ -52,11 +88,18 @@ export class TeamSnekProcessor extends SnekProcessor {
   private calculateTeamWinners(teamID: string, gameState: any): Winner[] {
     const teamPlayers = this.gameSetup.gamePlayers.filter(player => player.teamID === teamID);
     
+    // Calculate the team's total score
+    let teamScore = 0;
+    teamPlayers.forEach(player => {
+      teamScore += gameState.newSnakes[player.id]?.length || 0;
+    });
+    
     return teamPlayers.map(player => ({
       playerID: player.id,
       score: gameState.newSnakes[player.id]?.length || 0,
       winningSquares: gameState.newSnakes[player.id] || [],
-      teamID: teamID
+      teamID: teamID,
+      teamScore: teamScore
     }));
   }
 
@@ -94,6 +137,9 @@ export class TeamSnekProcessor extends SnekProcessor {
     // Update the turn with new scores
     newTurn.scores = playerScores;
     newTurn.teamScores = teamScores;
+    
+    // Set the scoring unit for team-based display
+    newTurn.scoringUnit = 'team';
     
     return newTurn;
   }
