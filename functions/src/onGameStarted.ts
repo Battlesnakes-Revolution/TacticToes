@@ -50,11 +50,20 @@ export const onGameStarted = functions.firestore
       return
     }
 
+    // For team snek games, only include players assigned to teams
+    // Unassigned players become observers
+    const filteredSetup = afterData.gameType === 'teamsnek' 
+      ? {
+          ...afterData,
+          gamePlayers: afterData.gamePlayers.filter(player => player.teamID)
+        }
+      : afterData;
+
     // gameprocessor needs gamestate due to needing all turns.
     // construct a new object with empty fields
     const gameState: GameState = {
       turns: [],
-      setup: afterData,
+      setup: filteredSetup,
       // these are not used, don't want to change to optional fields though
       timeCreated: Timestamp.fromMillis(0),
       timeFinished: Timestamp.fromMillis(0),
@@ -91,7 +100,7 @@ export const onGameStarted = functions.firestore
         .collection(`sessions/${sessionID}/games`)
         .doc(gameID)
       const newGame: GameState = {
-        setup: afterData,
+        setup: filteredSetup,
         turns: [firstTurn],
         timeCreated: FieldValue.serverTimestamp(),
         timeFinished: null,
