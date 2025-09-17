@@ -1,6 +1,6 @@
 // functions/src/gameprocessors/ProcessorFactory.ts
 
-import { GameState, GameType } from "@shared/types/Game"
+import { GameState, GameType, GameSetup, GamePlayer } from "@shared/types/Game"
 import { ColorClashProcessor } from "./ColourClash"
 import { Connect4Processor } from "./Connect4Processor"
 import { GameProcessor } from "./GameProcessor"
@@ -11,25 +11,34 @@ import { TacticToesProcessor } from "./TacticToesProcessor"
 import { TeamSnekProcessor } from "./TeamSnekProcessor"
 
 /**
+ * Interface that defines the shape of a GameProcessor constructor.
+ * This includes both the constructor signature and required static methods.
+ */
+interface GameProcessorConstructor {
+  new (gameState: GameState): GameProcessor;
+  filterActivePlayers(setup: GameSetup): GamePlayer[];
+}
+
+/**
  * Get the processor class for a given game type.
  * This returns the class constructor, not an instance.
  */
-export function getProcessorClass(gameType: GameType): typeof GameProcessor | null {
+export function getProcessorClass(gameType: GameType): GameProcessorConstructor | null {
   switch (gameType) {
     case "connect4":
-      return Connect4Processor as any
+      return Connect4Processor
     case "longboi":
-      return LongboiProcessor as any
+      return LongboiProcessor
     case "tactictoes":
-      return TacticToesProcessor as any
+      return TacticToesProcessor
     case "snek":
-      return SnekProcessor as any
+      return SnekProcessor
     case "colourclash":
-      return ColorClashProcessor as any
+      return ColorClashProcessor
     case "reversi":
-      return ReversiProcessor as any
+      return ReversiProcessor
     case "teamsnek":
-      return TeamSnekProcessor as any
+      return TeamSnekProcessor
     default:
       console.error(`Unsupported game type: ${gameType}`)
       return null
@@ -41,5 +50,5 @@ export function getGameProcessor(gameState: GameState): GameProcessor | null {
   if (!ProcessorClass) {
     return null
   }
-  return new (ProcessorClass as any)(gameState)
+  return new ProcessorClass(gameState)
 }
