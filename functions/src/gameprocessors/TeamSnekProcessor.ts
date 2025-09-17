@@ -123,15 +123,10 @@ export class TeamSnekProcessor extends SnekProcessor {
       }
     });
     
-    // Second pass: assign team score to each player
+    // Second pass: assign individual scores to each player
     this.gameSetup.gamePlayers.forEach(player => {
-      if (player.teamID) {
-        // Each player gets their team's total score
-        playerScores[player.id] = teamScores[player.teamID];
-      } else {
-        // Non-team players use snake length
-        playerScores[player.id] = gameState.newSnakes[player.id]?.length || 0;
-      }
+      // Each player gets their individual snake length
+      playerScores[player.id] = gameState.newSnakes[player.id]?.length || 0;
     });
     
     // Update the turn with new scores

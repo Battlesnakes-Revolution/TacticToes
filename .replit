@@ -64,6 +64,10 @@ externalPort = 5000
 localPort = 8762
 externalPort = 5173
 
+[[ports]]
+localPort = 43971
+externalPort = 6000
+
 
 [deployment]
 build = ["sh", "-c", "cd frontend && npm run build"]
