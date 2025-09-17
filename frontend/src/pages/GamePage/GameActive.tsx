@@ -19,6 +19,7 @@ import {
 import { useGameStateContext } from "../../context/GameStateContext"
 import GameGrid from "./GameGrid"
 import UserRulesAccept from "./UserRuleAccept"
+import { Player } from "@shared/types/Game"
 
 const GameActive: React.FC = () => {
   const { userID } = useUser()
@@ -47,6 +48,10 @@ const GameActive: React.FC = () => {
   const playerInCurrentGame = gameSetup?.gamePlayers.find(
     (player) => player.id === userID,
   )
+  const filteredPlayers = players.filter((player: Player) => {
+    return latestMoveStatus?.movedPlayerIDs.includes(player.id)
+  })
+  const isGameOver = currentTurn.winners.length > 0
 
   return (
     <Stack spacing={2} pt={2}>
@@ -118,9 +123,15 @@ const GameActive: React.FC = () => {
                     {player.name} {player.emoji}
                   </TableCell>
                   <TableCell align="right">
-                    {latestMoveStatus?.movedPlayerIDs.includes(player.id)
-                      ? "yeah"
-                      : "nah"}
+                    {(() => {
+                      // If game is over, use filteredPlayers logic
+                      if (isGameOver) {
+                        return filteredPlayers.includes(player) ? "yeah" : "nah"
+                      }
+                      
+                      // If game is not over, check if player has moved
+                      return latestMoveStatus?.movedPlayerIDs.includes(player.id) ? "yeah" : "nah"
+                    })()}
                   </TableCell>
                   <TableCell align="right">
                     {currentTurn.scores[player.id]}
