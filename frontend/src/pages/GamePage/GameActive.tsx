@@ -1,7 +1,7 @@
 // src/components/GameActive.tsx
 
-import React, { useState } from "react"
-import { useUser } from "../../context/UserContext"
+import React, { useState } from "react";
+import { useUser } from "../../context/UserContext";
 
 import {
   Alert,
@@ -14,15 +14,14 @@ import {
   TableHead,
   TableRow,
   Typography,
-} from "@mui/material"
+} from "@mui/material";
 
-import { useGameStateContext } from "../../context/GameStateContext"
-import GameGrid from "./GameGrid"
-import UserRulesAccept from "./UserRuleAccept"
-import { Player } from "@shared/types/Game"
+import { useGameStateContext } from "../../context/GameStateContext";
+import GameGrid from "./GameGrid";
+import UserRulesAccept from "./UserRuleAccept";
 
 const GameActive: React.FC = () => {
-  const { userID } = useUser()
+  const { userID } = useUser();
   const {
     gameState,
     gameSetup,
@@ -32,32 +31,29 @@ const GameActive: React.FC = () => {
     latestMoveStatus,
     connectivityStatus,
     queryTimedOut,
-  } = useGameStateContext()
+  } = useGameStateContext();
 
-  const [isRulesDialogOpen, setIsRulesDialogOpen] = useState(true) // Show rules dialog initially
-  const [isRulesAccepted, setIsRulesAccepted] = useState(false) // Track if rules have been accepted
+  const [isRulesDialogOpen, setIsRulesDialogOpen] = useState(true); // Show rules dialog initially
+  const [isRulesAccepted, setIsRulesAccepted] = useState(false); // Track if rules have been accepted
 
   const handleRulesAccepted = () => {
-    setIsRulesAccepted(true)
-    setIsRulesDialogOpen(false)
-  }
+    setIsRulesAccepted(true);
+    setIsRulesDialogOpen(false);
+  };
 
-  if (!gameState) return null
+  if (!gameState) return null;
 
-  const currentTurn = gameState.turns[gameState.turns.length - 1]
+  const currentTurn = gameState.turns[gameState.turns.length - 1];
   const playerInCurrentGame = gameSetup?.gamePlayers.find(
     (player) => player.id === userID,
-  )
-  const filteredPlayers = players.filter((player: Player) => {
-    return latestMoveStatus?.movedPlayerIDs.includes(player.id)
-  })
-  const isGameOver = currentTurn.winners.length > 0
-  const scoringUnit = currentTurn?.scoringUnit || 'individual'
-  
+  );
+
+  const scoringUnit = currentTurn?.scoringUnit || "individual";
+
   // Filter players to only show those in the current game
-  const gamePlayers = players.filter(player => 
-    gameSetup?.gamePlayers.some(gp => gp.id === player.id)
-  )
+  const gamePlayers = players.filter((player) =>
+    gameSetup?.gamePlayers.some((gp) => gp.id === player.id),
+  );
 
   return (
     <Stack spacing={2} pt={2}>
@@ -80,17 +76,15 @@ const GameActive: React.FC = () => {
         </Alert>
       )}
       {/* Alert if internet error */}
-      {connectivityStatus === 'disconnected' &&
+      {connectivityStatus === "disconnected" && (
         <Alert severity="error">
           You have no internet. Seek higher ground.
         </Alert>
-      }
+      )}
       {/* Alert if internet error */}
-      {queryTimedOut && connectivityStatus !== 'disconnected' &&
-        <Alert severity="error">
-          Your internet is slow. Get good.
-        </Alert>
-      }
+      {queryTimedOut && connectivityStatus !== "disconnected" && (
+        <Alert severity="error">Your internet is slow. Get good.</Alert>
+      )}
 
       <Typography>
         Turn {gameState.turns.length}.{" "}
@@ -107,7 +101,7 @@ const GameActive: React.FC = () => {
       {<GameGrid />}
 
       {/* Players/Teams Table */}
-      {scoringUnit === 'team' && gameSetup?.teams ? (
+      {scoringUnit === "team" && gameSetup?.teams ? (
         // Team-based table
         <TableContainer sx={{ my: 2, width: "100%" }}>
           <Table size="small" sx={{ borderCollapse: "collapse" }}>
@@ -120,33 +114,32 @@ const GameActive: React.FC = () => {
             </TableHead>
             <TableBody>
               {gameSetup.teams.map((team) => {
-                const teamScore = currentTurn.teamScores?.[team.id] || 0
-                const teamPlayers = gamePlayers.filter(player =>
-                  gameSetup.gamePlayers.some(gp => gp.id === player.id && gp.teamID === team.id)
-                )
-                
+                const teamScore = currentTurn.teamScores?.[team.id] || 0;
+                const teamPlayers = gamePlayers.filter((player) =>
+                  gameSetup.gamePlayers.some(
+                    (gp) => gp.id === player.id && gp.teamID === team.id,
+                  ),
+                );
+
                 return (
-                  <TableRow
-                    key={team.id}
-                    sx={{ backgroundColor: team.color }}
-                  >
-                    <TableCell>
-                      {team.name}
-                    </TableCell>
-                    <TableCell align="right">
-                      {teamScore}
-                    </TableCell>
+                  <TableRow key={team.id} sx={{ backgroundColor: team.color }}>
+                    <TableCell>{team.name}</TableCell>
+                    <TableCell align="right">{teamScore}</TableCell>
                     <TableCell align="left">
-                      {teamPlayers.map(p => (
+                      {teamPlayers.map((p) => (
                         <span key={p.id}>
                           {p.emoji} {p.name}
-                          {latestMoveStatus?.movedPlayerIDs.includes(p.id) ? " ✓" : " ⏳"}
-                          {teamPlayers.indexOf(p) < teamPlayers.length - 1 ? ", " : ""}
+                          {latestMoveStatus?.movedPlayerIDs.includes(p.id)
+                            ? " ✓"
+                            : " ⏳"}
+                          {teamPlayers.indexOf(p) < teamPlayers.length - 1
+                            ? ", "
+                            : ""}
                         </span>
                       ))}
                     </TableCell>
                   </TableRow>
-                )
+                );
               })}
             </TableBody>
           </Table>
@@ -173,21 +166,15 @@ const GameActive: React.FC = () => {
                       {player.name} {player.emoji}
                     </TableCell>
                     <TableCell align="right">
-                      {(() => {
-                        // If game is over, use filteredPlayers logic
-                        if (isGameOver) {
-                          return filteredPlayers.includes(player) ? "yeah" : "nah"
-                        }
-                        
-                        // If game is not over, check if player has moved
-                        return latestMoveStatus?.movedPlayerIDs.includes(player.id) ? "yeah" : "nah"
-                      })()}
+                      {latestMoveStatus?.movedPlayerIDs.includes(player.id)
+                        ? "yeah"
+                        : "nah"}
                     </TableCell>
                     <TableCell align="right">
                       {currentTurn.scores[player.id]}
                     </TableCell>
                   </TableRow>
-                )
+                );
               })}
             </TableBody>
           </Table>
@@ -220,27 +207,27 @@ const GameActive: React.FC = () => {
                 const unmovePlayers = currentTurn.alivePlayers.filter(
                   (player) =>
                     !latestMoveStatus?.movedPlayerIDs?.includes(player),
-                )
+                );
 
-                if (unmovePlayers.length === 0) return "the cloud"
+                if (unmovePlayers.length === 0) return "the cloud";
 
                 return unmovePlayers.map((gamePlayer, index) => {
                   const player = players.find(
                     (player) => gamePlayer === player.id,
-                  )
+                  );
                   return (
                     <React.Fragment key={player?.id}>
                       {player?.name}
                       {index < unmovePlayers.length - 1 && <br />}
                     </React.Fragment>
-                  )
-                })
+                  );
+                });
               })()}
             </Typography>
           </Box>
         )}
     </Stack>
-  )
-}
+  );
+};
 
-export default GameActive
+export default GameActive;
