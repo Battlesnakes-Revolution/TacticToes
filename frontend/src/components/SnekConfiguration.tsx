@@ -1,8 +1,10 @@
 import React from "react"
-import { FormControl, TextField } from "@mui/material"
+import { Checkbox, FormControl, FormControlLabel, TextField } from "@mui/material"
 
 interface SnekConfigurationProps {
   maxTurns: number
+  maxTurnsEnabled: boolean
+  onMaxTurnsToggle: (enabled: boolean) => void
   onMaxTurnsChange: (turns: number) => void
   hazardPercentage: number
   onHazardPercentageChange: (percentage: number) => void
@@ -10,6 +12,8 @@ interface SnekConfigurationProps {
 
 export const SnekConfiguration: React.FC<SnekConfigurationProps> = ({
   maxTurns,
+  maxTurnsEnabled,
+  onMaxTurnsToggle,
   onMaxTurnsChange,
   hazardPercentage,
   onHazardPercentageChange,
@@ -17,6 +21,15 @@ export const SnekConfiguration: React.FC<SnekConfigurationProps> = ({
   return (
     <FormControl fullWidth margin="normal">
       <div style={{ display: "flex", gap: "15px" }}>
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={maxTurnsEnabled}
+              onChange={(e) => onMaxTurnsToggle(e.target.checked)}
+            />
+          }
+          label="Enable Turn Limit"
+        />
         <TextField
           type="number"
           label="Max Turns"
@@ -24,6 +37,7 @@ export const SnekConfiguration: React.FC<SnekConfigurationProps> = ({
           onChange={(e) => onMaxTurnsChange(parseInt(e.target.value) || 0)}
           sx={{ flex: 1 }}
           inputProps={{ min: 1 }}
+          disabled={!maxTurnsEnabled}
         />
         <TextField
           type="number"

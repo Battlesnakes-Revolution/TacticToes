@@ -1,6 +1,12 @@
 // src/pages/GamePage/components/GameSetup.tsx
 
-import { arrayRemove, arrayUnion, doc, updateDoc } from "firebase/firestore"
+import {
+  arrayRemove,
+  arrayUnion,
+  deleteField,
+  doc,
+  updateDoc,
+} from "firebase/firestore"
 import React, { useEffect, useState } from "react"
 import { useUser } from "../../context/UserContext"
 import { db } from "../../firebaseConfig"
@@ -56,7 +62,10 @@ const GameSetup: React.FC = () => {
   const [RulesComponent, setRulesComponent] = useState<React.FC | null>(null)
   const [boardSize, setBoardSize] = useState<BoardSize>("medium")
   const [teams, setTeams] = useState<Team[]>(gameSetup?.teams || [])
-  const [maxTurns, setMaxTurns] = useState<number>(gameSetup?.maxTurns || 100)
+  const [maxTurnsEnabled, setMaxTurnsEnabled] = useState<boolean>(
+    gameSetup?.maxTurns !== undefined,
+  )
+  const [maxTurns, setMaxTurns] = useState<number>(gameSetup?.maxTurns ?? 100)
   const [hazardPercentage, setHazardPercentage] = useState<number>(
     gameSetup?.hazardPercentage ??
       (gameSetup as any)?.terrainPercentage ??
@@ -96,6 +105,9 @@ const GameSetup: React.FC = () => {
       //  Update max turns
       if (gameSetup.maxTurns !== undefined) {
         setMaxTurns(gameSetup.maxTurns)
+        setMaxTurnsEnabled(true)
+      } else {
+        setMaxTurnsEnabled(false)
       }
 
       // Update hazard percentage
@@ -240,10 +252,30 @@ const GameSetup: React.FC = () => {
 
   // Handle max turns configuration
   const handleMaxTurnsChange = async (newMaxTurns: number) => {
-    await updateDoc(gameDocRef, {
-      maxTurns: newMaxTurns,
-    })
-    setMaxTurns(newMaxTurns)
+    const sanitizedValue = Math.max(1, newMaxTurns)
+    setMaxTurns(sanitizedValue)
+
+    if (maxTurnsEnabled) {
+      await updateDoc(gameDocRef, {
+        maxTurns: sanitizedValue,
+      })
+    }
+  }
+
+  const handleMaxTurnsToggle = async (enabled: boolean) => {
+    setMaxTurnsEnabled(enabled)
+
+    if (enabled) {
+      const sanitizedValue = Math.max(1, maxTurns)
+      setMaxTurns(sanitizedValue)
+      await updateDoc(gameDocRef, {
+        maxTurns: sanitizedValue,
+      })
+    } else {
+      await updateDoc(gameDocRef, {
+        maxTurns: deleteField(),
+      })
+    }
   }
 
   // Handle hazard percentage configuration
@@ -521,6 +553,8 @@ const GameSetup: React.FC = () => {
           >
             <SnekConfiguration
               maxTurns={maxTurns}
+              maxTurnsEnabled={maxTurnsEnabled}
+              onMaxTurnsToggle={handleMaxTurnsToggle}
               onMaxTurnsChange={handleMaxTurnsChange}
               hazardPercentage={hazardPercentage}
               onHazardPercentageChange={handleHazardPercentageChange}
