@@ -57,7 +57,24 @@ export class KingSnekProcessor extends TeamSnekProcessor {
     const aliveTeams = this.getKingSnekAliveTeams(gameState);
 
     if (aliveTeams.length === 0) {
-      return [];
+      // Everyone died - treat as draw between all teams
+      const allTeams = Array.from(
+        new Set(
+          this.gameSetup.gamePlayers
+            .map(player => player.teamID)
+            .filter((teamID): teamID is string => Boolean(teamID))
+        )
+      );
+
+      if (allTeams.length === 0) {
+        // Fallback: no teams identified, treat all players as drawing
+        return this.createIndividualWinners(
+          gameState,
+          this.gameSetup.gamePlayers.map(player => player.id),
+        );
+      }
+
+      return allTeams.flatMap(teamID => this.calculateKingSnekTeamWinners(teamID, gameState));
     }
 
     if (aliveTeams.length === 1) {
@@ -75,7 +92,7 @@ export class KingSnekProcessor extends TeamSnekProcessor {
         return this.calculateKingSnekTeamWinners(topTeams[0], gameState);
       }
 
-      return [];
+      return topTeams.flatMap(teamID => this.calculateKingSnekTeamWinners(teamID, gameState));
     }
 
     return [];

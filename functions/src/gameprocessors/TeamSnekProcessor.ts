@@ -26,7 +26,24 @@ export class TeamSnekProcessor extends SnekProcessor {
     const aliveTeams = this.getAliveTeams(gameState);
 
     if (aliveTeams.length === 0) {
-      return [];
+        // Everyone died - treat as draw between all teams
+        const allTeams = Array.from(
+          new Set(
+            this.gameSetup.gamePlayers
+              .map(player => player.teamID)
+              .filter((teamID): teamID is string => Boolean(teamID))
+          )
+        );
+
+        if (allTeams.length === 0) {
+          // Fallback: no teams identified, treat all players as drawing
+          return this.createIndividualWinners(
+            gameState,
+            this.gameSetup.gamePlayers.map(player => player.id),
+          );
+        }
+
+        return allTeams.flatMap(teamID => this.calculateTeamWinners(teamID, gameState));
     }
 
     if (aliveTeams.length === 1) {
@@ -44,8 +61,8 @@ export class TeamSnekProcessor extends SnekProcessor {
         return this.calculateTeamWinners(topTeams[0], gameState);
       }
 
-      // Tie at the turn limit results in a draw
-      return [];
+      // Tie at the turn limit results in a draw between top teams
+      return topTeams.flatMap(teamID => this.calculateTeamWinners(teamID, gameState));
     }
 
     return [];
