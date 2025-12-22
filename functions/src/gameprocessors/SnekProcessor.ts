@@ -462,8 +462,11 @@ export class SnekProcessor extends GameProcessor {
     const alivePlayers = gameState.newAlivePlayers
 
     if (alivePlayers.length === 0) {
-      // Everyone died simultaneously
-      return []
+      // Everyone died simultaneously - treat as a draw and end the game
+      return this.createIndividualWinners(
+        gameState,
+        this.gameSetup.gamePlayers.map((player) => player.id),
+      )
     }
 
     if (alivePlayers.length === 1) {
@@ -471,8 +474,18 @@ export class SnekProcessor extends GameProcessor {
     }
 
     if (reachedTurnLimit) {
-      // Multiple snakes survived the turn limit, so it's a draw
-      return []
+      // Multiple snakes survived the turn limit, highest length wins (ties allowed)
+      const longestLength = Math.max(
+        ...alivePlayers.map(
+          (playerID) => gameState.newSnakes[playerID]?.length ?? 0,
+        ),
+      )
+
+      const topPlayers = alivePlayers.filter(
+        (playerID) => (gameState.newSnakes[playerID]?.length ?? 0) === longestLength,
+      )
+
+      return this.createIndividualWinners(gameState, topPlayers)
     }
 
     return []
