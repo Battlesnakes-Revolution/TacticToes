@@ -75,7 +75,7 @@ export class KingSnekProcessor extends TeamSnekProcessor {
         return this.calculateKingSnekTeamWinners(topTeams[0], gameState);
       }
 
-      return [];
+      return this.calculateKingSnekDrawWinners(topTeams, gameState);
     }
 
     return [];
@@ -102,11 +102,30 @@ export class KingSnekProcessor extends TeamSnekProcessor {
     
     return teamPlayers.map(player => ({
       playerID: player.id,
-      score: gameState.newSnakes[player.id]?.length || 0,
+      // King length fully determines the team score/placements
+      score: teamScore,
       winningSquares: gameState.newSnakes[player.id] || [],
       teamID: teamID,
       teamScore: teamScore
     }));
+  }
+
+  private calculateKingSnekDrawWinners(teamIDs: string[], gameState: any): Winner[] {
+    return teamIDs.flatMap(teamID => {
+      const king = this.getKingForTeam(teamID);
+      const teamScore = king ? (gameState.newSnakes[king.id]?.length || 0) : 0;
+
+      return this.gameSetup.gamePlayers
+        .filter(player => player.teamID === teamID)
+        .map(player => ({
+          playerID: player.id,
+          // King length fully determines the team score/placements
+          score: teamScore,
+          winningSquares: gameState.newSnakes[player.id] || [],
+          teamID,
+          teamScore
+        }));
+    });
   }
 
   private getKingTeamScores(gameState: any): Map<string, number> {
@@ -137,7 +156,10 @@ export class KingSnekProcessor extends TeamSnekProcessor {
     });
 
     this.gameSetup.gamePlayers.forEach(player => {
-      playerScores[player.id] = gameState.deadPlayers.has(player.id) ? 0 : (gameState.newSnakes[player.id]?.length || 0);
+      const king = player.teamID ? this.getKingForTeam(player.teamID) : undefined;
+      const kingScore = king ? (gameState.newSnakes[king.id]?.length || 0) : 0;
+      // Every player on a team shares the king-determined score for consistency
+      playerScores[player.id] = gameState.deadPlayers.has(player.id) ? 0 : kingScore;
     });
     
     newTurn.scores = playerScores;

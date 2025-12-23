@@ -44,8 +44,8 @@ export class TeamSnekProcessor extends SnekProcessor {
         return this.calculateTeamWinners(topTeams[0], gameState);
       }
 
-      // Tie at the turn limit results in a draw
-      return [];
+      // Tie at the turn limit results in a draw between the top teams
+      return this.calculateTeamDrawWinners(topTeams, gameState);
     }
 
     return [];
@@ -75,6 +75,23 @@ export class TeamSnekProcessor extends SnekProcessor {
       teamID: teamID,
       teamScore: teamScore
     }));
+  }
+
+  private calculateTeamDrawWinners(teamIDs: string[], gameState: any): Winner[] {
+    return teamIDs.flatMap(teamID => {
+      const teamScore = this.getTeamScore(teamID, gameState);
+
+      return this.gameSetup.gamePlayers
+        .filter(player => player.teamID === teamID)
+        .map(player => ({
+          playerID: player.id,
+          // Use team score so all members of tied teams share the same placement
+          score: teamScore,
+          winningSquares: gameState.newSnakes[player.id] || [],
+          teamID,
+          teamScore
+        }));
+    });
   }
 
   private getTeamScore(teamID: string, gameState: any): number {
