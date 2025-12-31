@@ -67,6 +67,7 @@
     maxTurns?: number // Default: 100
     hazardPercentage?: number // Percentage of the board to fill with hazards (defaults to 0)
     gameMode?: "individual" | "team"
+    teamClustersEnabled?: boolean
   }
 
   // Updated GameState interface with the new 'winners' structure
