@@ -122,6 +122,7 @@
     eliminatedTeams?: string[] // Optional: only for team games
     turnNumber?: number // Optional: only for team games
     scoringUnit?: 'individual' | 'team' // How scores/winners are aggregated
+    teamClusterFallback?: boolean // Optional: team clusters requested but fell back
   }
 
   export interface Clash {

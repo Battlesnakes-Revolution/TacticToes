@@ -61,7 +61,7 @@ export class SnekProcessor extends GameProcessor {
     const now = Date.now()
 
     // Initialize playerPieces
-    const playerPieces = this.initializeSnakes()
+    const { playerPieces, teamClusterFallback } = this.initializeSnakes()
 
     // Initialize walls
     const walls = this.getWallPositions(boardWidth, boardHeight)
@@ -114,6 +114,7 @@ export class SnekProcessor extends GameProcessor {
       clashes: [],
       moves: {},
       winners: [],
+      teamClusterFallback,
     }
 
     return firstTurn
@@ -568,9 +569,12 @@ export class SnekProcessor extends GameProcessor {
   }
 
   // Helper methods that were in the original implementation
-  private initializeSnakes(): { [playerID: string]: number[] } {
+  private initializeSnakes(): {
+    playerPieces: { [playerID: string]: number[] }
+    teamClusterFallback: boolean
+  } {
     const { boardWidth, gamePlayers } = this.gameSetup
-    const positions = this.generateStartingPositions()
+    const { positions, teamClusterFallback } = this.generateStartingPositions()
     const playerPieces: { [playerID: string]: number[] } = {}
 
     gamePlayers.forEach((player, index) => {
@@ -580,7 +584,7 @@ export class SnekProcessor extends GameProcessor {
       playerPieces[player.id] = snake
     })
 
-    return playerPieces
+    return { playerPieces, teamClusterFallback }
   }
 
   private initializeFood(
@@ -1004,16 +1008,26 @@ export class SnekProcessor extends GameProcessor {
     return Array.from(hazardSet)
   }
 
-  private generateStartingPositions(): { x: number; y: number }[] {
+  private generateStartingPositions(): {
+    positions: { x: number; y: number }[]
+    teamClusterFallback: boolean
+  } {
+    let teamClusterFallback = false
     if (this.shouldUseTeamClusters()) {
       const clusteredPositions = this.generateTeamClusterStartingPositions()
       if (clusteredPositions.length === this.gameSetup.gamePlayers.length) {
-        return clusteredPositions
+        return { positions: clusteredPositions, teamClusterFallback }
       }
+      teamClusterFallback = true
     }
 
     const { boardWidth, boardHeight, gamePlayers } = this.gameSetup
     const positions: { x: number; y: number }[] = []
+    const addUniquePosition = (pos: { x: number; y: number }): void => {
+      if (!positions.some((p) => p.x === pos.x && p.y === pos.y)) {
+        positions.push(pos)
+      }
+    }
 
     // Calculate the outermost position that allows odd spacing
     const startX = (boardWidth - 1) % 4 === 0 ? 2 : 1
@@ -1030,12 +1044,10 @@ export class SnekProcessor extends GameProcessor {
     ]
 
     // Add corner positions
-    positions.push(
-      { x: startX, y: startY },
-      { x: endX, y: startY },
-      { x: startX, y: endY },
-      { x: endX, y: endY },
-    )
+    addUniquePosition({ x: startX, y: startY })
+    addUniquePosition({ x: endX, y: startY })
+    addUniquePosition({ x: startX, y: endY })
+    addUniquePosition({ x: endX, y: endY })
 
     let depth = 0
     while (positions.length < gamePlayers.length) {
@@ -1046,16 +1058,13 @@ export class SnekProcessor extends GameProcessor {
       }
 
       // Filter out duplicates and add new positions
-      newPositions.forEach((pos) => {
-        if (!positions.some((p) => p.x === pos.x && p.y === pos.y)) {
-          positions.push(pos)
-        }
-      })
+      const beforeCount = positions.length
+      newPositions.forEach((pos) => addUniquePosition(pos))
 
       depth++
 
-      // If we can't add more positions on the edges, break the loop
-      if (newPositions.length === 0) break
+      // If we can't add more unique positions on the edges, break the loop
+      if (positions.length === beforeCount) break
     }
 
     // If we still need more positions, fill the inner part
@@ -1063,7 +1072,21 @@ export class SnekProcessor extends GameProcessor {
       this.fillInnerPositions(positions)
     }
 
-    return positions.slice(0, gamePlayers.length)
+    if (positions.length < gamePlayers.length) {
+      for (let y = 1; y < boardHeight - 1; y++) {
+        for (let x = 1; x < boardWidth - 1; x++) {
+          addUniquePosition({ x, y })
+          if (positions.length >= gamePlayers.length) {
+            break
+          }
+        }
+        if (positions.length >= gamePlayers.length) {
+          break
+        }
+      }
+    }
+
+    return { positions: positions.slice(0, gamePlayers.length), teamClusterFallback }
   }
 
   private shouldUseTeamClusters(): boolean {
@@ -1077,8 +1100,9 @@ export class SnekProcessor extends GameProcessor {
   private generateTeamClusterStartingPositions(): { x: number; y: number }[] {
     const { boardWidth, boardHeight, gamePlayers, teams } = this.gameSetup
     const minDistance = 4
+    const intraTeamSpacing = 4
     const ringInset = Math.max(
-      1,
+      2,
       Math.floor(Math.min(boardWidth, boardHeight) / 2) - 6,
     )
 
@@ -1131,6 +1155,7 @@ export class SnekProcessor extends GameProcessor {
       const segmentLengths = this.calculateTeamSegmentLengths(
         teamInfo.map((team) => team.players.length),
         availableSlots,
+        intraTeamSpacing,
       )
       if (!segmentLengths) {
         return []
@@ -1155,9 +1180,10 @@ export class SnekProcessor extends GameProcessor {
         const candidates = segment.positions.filter((pos) =>
           this.isValidSpawnPosition(pos, false, boardWidth, boardHeight),
         )
-        const block = this.findContiguousBlock(
+        const block = this.findSpacedBlock(
           candidates,
           segment.players.length,
+          intraTeamSpacing,
           occupied,
           minDistance,
           segment.teamID,
@@ -1238,8 +1264,11 @@ export class SnekProcessor extends GameProcessor {
   private calculateTeamSegmentLengths(
     teamSizes: number[],
     availableSlots: number,
+    intraTeamSpacing: number,
   ): number[] | null {
-    const minPerTeam = teamSizes.map((size) => Math.max(size, 1))
+    const minPerTeam = teamSizes.map((size) =>
+      size <= 1 ? Math.max(size, 1) : 1 + (size - 1) * intraTeamSpacing,
+    )
     const minTotal = minPerTeam.reduce((sum, len) => sum + len, 0)
     if (minTotal > availableSlots) {
       return null
@@ -1289,22 +1318,26 @@ export class SnekProcessor extends GameProcessor {
     return segments
   }
 
-  private findContiguousBlock(
+  private findSpacedBlock(
     positions: { x: number; y: number }[],
     blockSize: number,
+    spacing: number,
     occupied: { x: number; y: number; teamID: string }[],
     minDistance: number,
     teamID: string,
   ): { x: number; y: number }[] | null {
     if (blockSize <= 0) return []
-    if (positions.length < blockSize) return null
+    const maxStart = positions.length - 1 - spacing * (blockSize - 1)
+    if (maxStart < 0) return null
 
     const startIndices = this.shuffleArray(
-      Array.from({ length: positions.length - blockSize + 1 }, (_, i) => i),
+      Array.from({ length: maxStart + 1 }, (_, i) => i),
     )
 
     for (const start of startIndices) {
-      const block = positions.slice(start, start + blockSize)
+      const block = Array.from({ length: blockSize }, (_unused, index) => {
+        return positions[start + index * spacing]
+      })
       const valid = block.every((pos) =>
         this.isFarFromOtherTeams(pos, occupied, minDistance, teamID),
       )
@@ -1357,16 +1390,6 @@ export class SnekProcessor extends GameProcessor {
       return false
     }
     return true
-  }
-
-  private isTooClose(
-    position: { x: number; y: number },
-    others: { x: number; y: number }[],
-    minDistance: number,
-  ): boolean {
-    return others.some(
-      (other) => this.getManhattanDistance(position, other) < minDistance,
-    )
   }
 
   private getManhattanDistance(

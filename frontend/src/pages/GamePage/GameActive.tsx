@@ -49,6 +49,12 @@ const GameActive: React.FC = () => {
   );
 
   const scoringUnit = currentTurn?.scoringUnit || "individual";
+  const showTeamClusterFallback = Boolean(
+    currentTurn?.teamClusterFallback &&
+      gameSetup?.teamClustersEnabled &&
+      (gameSetup.gameType === "teamsnek" || gameSetup.gameType === "kingsnek"),
+  );
+
 
   // Filter players to only show those in the current game
   const gamePlayers = players.filter((player) =>
@@ -69,11 +75,17 @@ const GameActive: React.FC = () => {
           />
         )}
 
-      {/* Alert if player joined late */}
-      {!playerInCurrentGame && (
+      {/* Alert if player joined late or team clusters failed */}
+      {showTeamClusterFallback ? (
         <Alert severity="warning">
-          This game started before you joined. Watch until the next game starts.
+          Team cluster spawn failed to fit all players. Standard spawn was used.
         </Alert>
+      ) : (
+        !playerInCurrentGame && (
+          <Alert severity="warning">
+            This game started before you joined. Watch until the next game starts.
+          </Alert>
+        )
       )}
       {/* Alert if internet error */}
       {connectivityStatus === "disconnected" && (
