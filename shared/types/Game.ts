@@ -1,6 +1,7 @@
   // @shared/types/Game.ts
 
-  import { FieldValue, Timestamp } from "firebase-admin/firestore"
+  export type Timestamp = any
+  export type FieldValue = any
 
   // Define the Winner interface
   export interface Winner {

@@ -60,6 +60,8 @@ const GameSetup: React.FC = () => {
     gameState,
   } = useGameStateContext()
 
+  if (!gameSetup) return null
+
   const [secondsPerTurn, setSecondsPerTurn] = useState<string>("10")
   const [RulesComponent, setRulesComponent] = useState<React.FC | null>(null)
   const [boardSize, setBoardSize] = useState<BoardSize>("medium")

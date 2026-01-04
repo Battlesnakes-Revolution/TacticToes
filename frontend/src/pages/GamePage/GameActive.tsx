@@ -43,23 +43,27 @@ const GameActive: React.FC = () => {
 
   if (!gameState) return null;
 
-  const currentTurn = gameState.turns[gameState.turns.length - 1];
+  const currentTurn = gameState.turns?.[gameState.turns.length - 1];
   const playerInCurrentGame = gameSetup?.gamePlayers.find(
     (player) => player.id === userID,
   );
 
   const scoringUnit = currentTurn?.scoringUnit || "individual";
-  const showTeamClusterFallback = Boolean(
-    currentTurn?.teamClusterFallback &&
-      gameSetup?.teamClustersEnabled &&
-      (gameSetup.gameType === "teamsnek" || gameSetup.gameType === "kingsnek"),
-  );
+  const showTeamClusterFallback = Boolean(currentTurn?.teamClusterFallback);
 
 
   // Filter players to only show those in the current game
   const gamePlayers = players.filter((player) =>
     gameSetup?.gamePlayers.some((gp) => gp.id === player.id),
   );
+
+  if (!currentTurn) {
+    return (
+      <Stack spacing={2} pt={2}>
+        <Alert severity="info">Waiting for game data.</Alert>
+      </Stack>
+    );
+  }
 
   return (
     <Stack spacing={2} pt={2}>
