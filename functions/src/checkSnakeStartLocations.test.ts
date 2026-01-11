@@ -231,7 +231,7 @@ describe("SnekProcessor", () => {
       const originalRandom = Math.random
       Math.random = () => 0
       try {
-        const intraTeamSpacing = 4
+        const intraTeamSpacing = 2
         const gameState = createTeamGameState(17, 17, 3, 2, gameType)
         const game = new SnekProcessor(gameState)
         const initializedGame = game.initializeGame()
@@ -264,10 +264,9 @@ describe("SnekProcessor", () => {
           for (let j = i + 1; j < players.length; j++) {
             const a = players[i]
             const b = players[j]
-            if (a.teamID === b.teamID) continue
             const posA = positions.get(a.id)!
             const posB = positions.get(b.id)!
-            expect(getManhattanDistance(posA, posB)).toBeGreaterThanOrEqual(4)
+            expect(getManhattanDistance(posA, posB)).toBeGreaterThanOrEqual(2)
           }
         }
 
@@ -289,6 +288,7 @@ describe("SnekProcessor", () => {
 
         positions.forEach((pos) => {
           expect(ringIndex.has(`${pos.x},${pos.y}`)).toBeTruthy()
+          expect((pos.x + pos.y) % 2).toBe(0)
         })
 
         const teamRanges = Array.from(teamMap.entries()).map(([teamID, ids]) => {
@@ -325,7 +325,16 @@ describe("SnekProcessor", () => {
             i === sortedRanges.length - 1
               ? ringPositions.length - 1 - current.max + next.min
               : next.min - current.max - 1
-          expect(gap).toBeGreaterThanOrEqual(4)
+          expect(gap).toBeGreaterThanOrEqual(2)
+        }
+
+        const playerIDs = gameState.setup.gamePlayers.map((player) => player.id)
+        for (let i = 0; i < playerIDs.length; i++) {
+          for (let j = i + 1; j < playerIDs.length; j++) {
+            const posA = positions.get(playerIDs[i])!
+            const posB = positions.get(playerIDs[j])!
+            expect(getManhattanDistance(posA, posB) % 2).toBe(0)
+          }
         }
       } finally {
         Math.random = originalRandom

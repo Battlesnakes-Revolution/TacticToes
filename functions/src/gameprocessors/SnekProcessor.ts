@@ -1099,8 +1099,8 @@ export class SnekProcessor extends GameProcessor {
 
   private generateTeamClusterStartingPositions(): { x: number; y: number }[] {
     const { boardWidth, boardHeight, gamePlayers, teams } = this.gameSetup
-    const minDistance = 4
-    const intraTeamSpacing = 4
+    const minDistance = 2
+    const intraTeamSpacing = 2
     const ringInset = Math.max(
       2,
       Math.floor(Math.min(boardWidth, boardHeight) / 2) - 6,
@@ -1129,7 +1129,7 @@ export class SnekProcessor extends GameProcessor {
       return []
     }
 
-    const minGap = 4
+    const minGap = 2
     const totalPlayers = teamIDs.reduce(
       (sum, teamID) => sum + (teamMap.get(teamID)?.length || 0),
       0,
@@ -1178,7 +1178,7 @@ export class SnekProcessor extends GameProcessor {
 
       for (const segment of segments) {
         const candidates = segment.positions.filter((pos) =>
-          this.isValidSpawnPosition(pos, false, boardWidth, boardHeight),
+          this.isValidSpawnPosition(pos, true, boardWidth, boardHeight),
         )
         const block = this.findSpacedBlock(
           candidates,
@@ -1338,9 +1338,10 @@ export class SnekProcessor extends GameProcessor {
       const block = Array.from({ length: blockSize }, (_unused, index) => {
         return positions[start + index * spacing]
       })
-      const valid = block.every((pos) =>
-        this.isFarFromOtherTeams(pos, occupied, minDistance, teamID),
-      )
+      const blockEntries = block.map((pos) => ({ ...pos, teamID }))
+      const valid =
+        this.arePositionsSpaced(blockEntries, minDistance) &&
+        blockEntries.every((pos) => this.isFarFromAllSnakes(pos, occupied, minDistance))
       if (valid) {
         return block
       }
@@ -1349,16 +1350,28 @@ export class SnekProcessor extends GameProcessor {
     return null
   }
 
-  private isFarFromOtherTeams(
+  private isFarFromAllSnakes(
     position: { x: number; y: number },
     occupied: { x: number; y: number; teamID: string }[],
     minDistance: number,
-    teamID: string,
   ): boolean {
-    return occupied.every((other) => {
-      if (other.teamID === teamID) return true
-      return this.getManhattanDistance(position, other) >= minDistance
-    })
+    return occupied.every(
+      (other) => this.getManhattanDistance(position, other) >= minDistance,
+    )
+  }
+
+  private arePositionsSpaced(
+    positions: { x: number; y: number; teamID: string }[],
+    minDistance: number,
+  ): boolean {
+    for (let i = 0; i < positions.length; i++) {
+      for (let j = i + 1; j < positions.length; j++) {
+        if (this.getManhattanDistance(positions[i], positions[j]) < minDistance) {
+          return false
+        }
+      }
+    }
+    return true
   }
 
   private shuffleArray<T>(items: T[]): T[] {
